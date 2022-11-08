@@ -4,19 +4,14 @@ import (
 	"fmt"
 	"hippo/config"
 	"hippo/handler"
+	"hippo/logging"
 	"log"
 	"net/http"
-	"os"
 )
 
 func main() {
-	f, err := os.OpenFile("server.log", os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
-	log.SetOutput(f)
-
-	if err != nil {
-		log.Fatalf("Fatal error opening server log: %v", err)
-	}
-	defer f.Close()
+	log.SetOutput(logging.Logfile)
+	defer logging.Logfile.Close()
 
 	conf := config.GetConfig()
 	basePath := conf.Server.BasePath + "%s"
@@ -24,8 +19,8 @@ func main() {
 	handler.Init(basePath)
 
 	address := fmt.Sprintf(":%d", conf.Server.Port)
-	log.Printf("Server listening on: %s", address)
-	err = http.ListenAndServe(address, nil)
+	logging.Info.Printf("Server listening on port: %d", conf.Server.Port)
+	err := http.ListenAndServe(address, nil)
 	if err != nil {
 		log.Fatalf("Fatal error listening and serving: %v", err)
 	}
