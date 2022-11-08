@@ -12,6 +12,7 @@ func main() {
 	conf := config.GetConfig()
 	basePath := conf.Server.BasePath + "%s"
 
+	// Initialize all handlers and endpoints
 	handler.Init(basePath)
 
 	address := fmt.Sprintf(":%d", conf.Server.Port)
