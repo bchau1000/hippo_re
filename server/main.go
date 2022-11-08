@@ -2,19 +2,21 @@ package main
 
 import (
 	"fmt"
+	"hippo/config"
 	"hippo/handler"
 	"log"
 	"net/http"
 )
 
 func main() {
-	path := "/hippo/api/%s"
+	conf := config.GetConfig()
+	basePath := conf.Server.BasePath + "%s"
 
-	http.HandleFunc(
-		fmt.Sprintf(path, "version"),
-		handler.GetVersion)
+	versionHandler := &handler.VersionHandler{}
+	versionHandler.Init(basePath)
 
-	if err := http.ListenAndServe(":8000", nil); err != nil {
+	address := fmt.Sprintf("%s:%d", conf.Server.Host, conf.Server.Port)
+	if err := http.ListenAndServe(address, nil); err != nil {
 		log.Fatal(err)
 	}
 }
