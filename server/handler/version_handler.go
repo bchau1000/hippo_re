@@ -19,7 +19,7 @@ func (vh *VersionHandler) GetVersion(resp http.ResponseWriter, request *http.Req
 	data, err := json.Marshal(version)
 
 	if err != nil {
-		logging.Error.Print(err)
+		logging.Fatal.Fatalf("Fatal error encountered while decoding json: %v", err)
 	}
 
 	logging.Info.Print("Retrieving server version...")

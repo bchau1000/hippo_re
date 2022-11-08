@@ -1,8 +1,8 @@
 package config
 
 import (
+	"hippo/logging"
 	"io/ioutil"
-	"log"
 
 	"gopkg.in/yaml.v3"
 )
@@ -20,7 +20,7 @@ func GetConfig() *config {
 	configFile, err := ioutil.ReadFile("config/config.yaml")
 
 	if err != nil {
-		log.Fatalf("Fatal error reading in config.yaml: %v", err)
+		logging.Fatal.Fatalf("Fatal error reading in config.yaml: %v", err)
 	}
 
 	conf := &config{}
@@ -28,7 +28,7 @@ func GetConfig() *config {
 	err = yaml.Unmarshal(configFile, conf)
 
 	if err != nil {
-		log.Fatalf("Fatal error decoding config.yaml: %v", err)
+		logging.Fatal.Fatalf("Fatal error decoding config.yaml: %v", err)
 	}
 
 	return conf
