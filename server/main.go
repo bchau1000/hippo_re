@@ -12,8 +12,7 @@ func main() {
 	conf := config.GetConfig()
 	basePath := conf.Server.BasePath + "%s"
 
-	versionHandler := &handler.VersionHandler{}
-	versionHandler.Init(basePath)
+	handler.Init(basePath)
 
 	address := fmt.Sprintf("%s:%d", conf.Server.Host, conf.Server.Port)
 	if err := http.ListenAndServe(address, nil); err != nil {

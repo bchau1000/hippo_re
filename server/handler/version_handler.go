@@ -28,7 +28,8 @@ func (vh *VersionHandler) GetVersion(resp http.ResponseWriter, request *http.Req
 	resp.Write(data)
 }
 
-func (vh *VersionHandler) Init(basePath string) {
+func NewVersionHandler(basePath string) {
+	vh := &VersionHandler{}
 	http.HandleFunc(
 		fmt.Sprintf(basePath, "version"),
 		vh.GetVersion)
