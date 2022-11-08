@@ -1,3 +1,3 @@
 server:
   port: 3000
-  basePath: "/hippo/api/"
+  basePath: "/api/"
