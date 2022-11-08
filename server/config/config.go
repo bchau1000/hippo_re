@@ -12,7 +12,6 @@ type config struct {
 }
 
 type server struct {
-	Host     string `yaml:"host"`
 	Port     int    `yaml:"port"`
 	BasePath string `yaml:"basePath"`
 }
