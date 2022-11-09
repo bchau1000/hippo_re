@@ -1,5 +1,5 @@
 FROM golang:1.18-alpine AS builder
-
+ENV DB_PASSWORD hippodbpassword
 # Create the working directory within the container
 WORKDIR /tmp/build
 
@@ -19,7 +19,7 @@ RUN go build -o ./out/deploy .
 
 # Create a smaller image to deploy onto
 FROM alpine:3.9
-
+ENV DB_PASSWORD hippodbpassword
 WORKDIR /hippo-server
 # Copy files built in builder image to our new smaller image
 # into root directory /

@@ -5,13 +5,16 @@ import (
 	"fmt"
 	"hippo/logging"
 	"hippo/model"
+	"hippo/service"
 	"net/http"
 )
 
 type VersionHandler struct {
+	pingService *service.PingService
 }
 
 func (vh *VersionHandler) GetVersion(resp http.ResponseWriter, request *http.Request) {
+	vh.pingService.PingDatabase()
 	version := &model.Version{
 		Version: "1.0",
 		Status:  "OK",
@@ -30,7 +33,9 @@ func (vh *VersionHandler) GetVersion(resp http.ResponseWriter, request *http.Req
 }
 
 func NewVersionHandler(hippoBasePath string) {
-	vh := &VersionHandler{}
+	vh := &VersionHandler{
+		pingService: &service.PingService{},
+	}
 	http.HandleFunc(
 		fmt.Sprintf(hippoBasePath, "version"),
 		vh.GetVersion)
