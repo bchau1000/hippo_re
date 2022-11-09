@@ -12,3 +12,7 @@ func (ps *PingService) PingDatabase() {
 	db.ExecuteQuery("SELECT 1;")
 	logging.Info.Print("Successfully pinged the database")
 }
+
+func NewPingService() PingService {
+	return PingService{}
+}

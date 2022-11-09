@@ -6,18 +6,22 @@ import (
 	"hippo/database"
 	"hippo/handler"
 	"hippo/logging"
+	"hippo/service"
 	"net/http"
 )
 
 func main() {
 	conf := config.GetConfig()
-	basePath := conf.Server.BasePath + "%s"
 
 	// Initialize MySQL Driver
 	database.Init(conf)
 
-	// Initialize all handlers and endpoints
-	handler.Init(basePath)
+	// Initialize handlers, services, and repositories
+	services := service.NewService()
+	handlers := handler.NewHandler(services)
+
+	// Initialize endpoints
+	handlers.HandleFunc(conf.Server.BasePath)
 
 	// Initialize and start server
 	initServer(conf)

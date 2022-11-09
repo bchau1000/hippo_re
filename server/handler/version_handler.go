@@ -2,7 +2,6 @@ package handler
 
 import (
 	"encoding/json"
-	"fmt"
 	"hippo/logging"
 	"hippo/model"
 	"hippo/service"
@@ -10,11 +9,11 @@ import (
 )
 
 type VersionHandler struct {
-	pingService *service.PingService
+	PingService service.PingService
 }
 
 func (vh *VersionHandler) GetVersion(resp http.ResponseWriter, request *http.Request) {
-	vh.pingService.PingDatabase()
+	vh.PingService.PingDatabase()
 	version := &model.Version{
 		Version: "1.0",
 		Status:  "OK",
@@ -32,11 +31,8 @@ func (vh *VersionHandler) GetVersion(resp http.ResponseWriter, request *http.Req
 	resp.Write(data)
 }
 
-func NewVersionHandler(hippoBasePath string) {
-	vh := &VersionHandler{
-		pingService: &service.PingService{},
+func NewVersionHandler(pingService service.PingService) VersionHandler {
+	return VersionHandler{
+		PingService: pingService,
 	}
-	http.HandleFunc(
-		fmt.Sprintf(hippoBasePath, "version"),
-		vh.GetVersion)
 }
