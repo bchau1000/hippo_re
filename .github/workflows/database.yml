@@ -16,4 +16,4 @@ jobs:
 
     - name: Build the Docker image
       working-directory: ./database
-      run: docker build . --file Dockerfile --tag hippo-db:$(date +%s)
+      run: docker build . --file Dockerfile --tag hippo-db
