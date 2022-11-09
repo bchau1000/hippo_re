@@ -1,3 +1,10 @@
 server:
   port: 3000
   basePath: "/hippo/api/"
+database:
+  port: 6033
+  name: "hippo_db"
+  
+  # ENV Variables
+  username: "root" 
+  password: "DB_PASSWORD"

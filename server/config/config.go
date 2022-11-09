@@ -8,12 +8,20 @@ import (
 )
 
 type config struct {
-	Server server `yaml:"server"`
+	Server   server   `yaml:"server"`
+	Database database `yaml:"database"`
 }
 
 type server struct {
 	Port     int    `yaml:"port"`
 	BasePath string `yaml:"basePath"`
+}
+
+type database struct {
+	Port     int    `yaml:"port"`
+	Name     string `yaml:"hippo_db"`
+	Username string `yaml:"username"`
+	Password string `yaml:"password"`
 }
 
 func GetConfig() *config {

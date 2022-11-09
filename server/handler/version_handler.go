@@ -8,7 +8,8 @@ import (
 	"net/http"
 )
 
-type VersionHandler struct{}
+type VersionHandler struct {
+}
 
 func (vh *VersionHandler) GetVersion(resp http.ResponseWriter, request *http.Request) {
 	version := &model.Version{

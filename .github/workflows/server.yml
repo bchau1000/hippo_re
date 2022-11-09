@@ -1,6 +1,4 @@
-# This workflow will build a golang project
-# For more information see: https://docs.github.com/en/actions/automating-builds-and-tests/building-and-testing-go
-
+# Workflow to validate Go build, Go test, and Docker image build
 name: Server
 
 on:
@@ -31,4 +29,4 @@ jobs:
 
     - name: Build the Docker image
       working-directory: ./server
-      run: docker build . --file Dockerfile --tag hippo:$(date +%s)
+      run: docker build . --file Dockerfile --tag hippo-server:$(date +%s)
