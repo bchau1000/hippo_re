@@ -27,6 +27,7 @@ type database struct {
 }
 
 func GetConfig() *Config {
+	logging.Info.Print("Reading in server configurations")
 	configFile, err := ioutil.ReadFile("config/config.yaml")
 
 	if err != nil {

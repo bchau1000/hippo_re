@@ -1,18 +1,26 @@
 package service
 
 import (
-	db "hippo/database"
 	"hippo/logging"
+	"hippo/repository"
 )
 
 type PingService struct {
+	PingRepository repository.PingRepository
 }
 
-func (ps *PingService) PingDatabase() {
-	db.ExecuteQuery("SELECT 1;")
-	logging.Info.Print("Successfully pinged the database")
+func (ps *PingService) PingDatabase() bool {
+	success := ps.PingRepository.PingDatabase()
+
+	if success {
+		logging.Info.Print("Successfully pinged the database")
+	}
+
+	return success
 }
 
-func NewPingService() PingService {
-	return PingService{}
+func NewPingService(pingRepository repository.PingRepository) PingService {
+	return PingService{
+		PingRepository: pingRepository,
+	}
 }

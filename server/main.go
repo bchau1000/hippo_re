@@ -3,31 +3,34 @@ package main
 import (
 	"fmt"
 	"hippo/config"
+	"hippo/controller"
 	"hippo/database"
-	"hippo/handler"
 	"hippo/logging"
+	"hippo/repository"
 	"hippo/service"
 	"net/http"
 )
 
 func main() {
+	// Read in configurations
 	conf := config.GetConfig()
 
 	// Initialize MySQL Driver
 	database.Init(conf)
 
-	// Initialize handlers, services, and repositories
-	services := service.NewService()
-	handlers := handler.NewHandler(services)
+	// Initialize repositories, services, and controllers
+	repositories := repository.NewRepository()
+	services := service.NewService(repositories)
+	controllers := controller.NewController(services)
 
 	// Initialize endpoints
-	handlers.HandleFunc(conf.Server.BasePath)
+	controllers.HandleFunc(conf.Server.BasePath)
 
-	// Initialize and start server
-	initServer(conf)
+	// Start the server
+	startServer(conf)
 }
 
-func initServer(config *config.Config) {
+func startServer(config *config.Config) {
 	address := fmt.Sprintf(":%d", config.Server.Port)
 
 	logging.Info.Printf("Starting server on port: %d", config.Server.Port)
