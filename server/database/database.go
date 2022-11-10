@@ -11,6 +11,10 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+type Builder interface {
+	ToSql() (string, []interface{}, error)
+}
+
 var db *sql.DB
 
 // Function to execute a raw SQL query
@@ -25,8 +29,15 @@ func ExecuteQuery(query string) sql.Result {
 }
 
 // Function to execute a SELECT query
-func Search(query sq.SelectBuilder) (sql.Result, error) {
-	result, err := query.RunWith(db).Exec()
+func Search(query sq.SelectBuilder) (*sql.Rows, error) {
+	sql, args, err := toSql(query)
+
+	if err != nil {
+		return nil, err
+	}
+
+	logging.Info.Printf("Executing SQL: (%s) with params: %v", sql, args)
+	result, err := db.Query(sql, args...)
 
 	if err != nil {
 		logging.Error.Printf("Error occurred while executing search: %v", err)
@@ -38,13 +49,18 @@ func Search(query sq.SelectBuilder) (sql.Result, error) {
 
 // Function to execute an INSERT query
 func Insert(query sq.InsertBuilder) (sql.Result, error) {
-	result, err := query.RunWith(db).Exec()
-
+	sql, args, err := toSql(query)
 	if err != nil {
-		logging.Error.Printf("Error occurred while executing insert: %v", err)
+		return nil, err
 	}
 
-	return result, err
+	result, err := exec(sql, args)
+
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 // Function to execute a DELETE query
@@ -57,6 +73,29 @@ func Delete(query sq.DeleteBuilder) (int64, error) {
 	}
 
 	return result.RowsAffected()
+}
+
+func toSql(builder Builder) (string, []interface{}, error) {
+	result, args, err := builder.ToSql()
+
+	if err != nil {
+		logging.Error.Printf("Error occurred while converting SQL: %v", err)
+		return "", nil, err
+	}
+
+	return result, args, nil
+}
+
+func exec(sql string, args []interface{}) (sql.Result, error) {
+	logging.Info.Printf("Executing SQL: %s\n%v", sql, args)
+	result, err := db.Exec(sql, args...)
+
+	if err != nil {
+		logging.Error.Printf("Error encountered executing SQL: %v", err)
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func Init(config *config.Config) {

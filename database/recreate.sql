@@ -4,7 +4,7 @@ USE hippo_db;
 
 DROP TABLE IF EXISTS `user`;
 CREATE TABLE `user` (
-    `id`           INTEGER      PRIMARY KEY,
-    `email`        VARCHAR(128) NOT NULL UNIQUE,
-    `display_name` VARCHAR(128) NOT NULL UNIQUE
+    `id`           INTEGER      PRIMARY KEY AUTO_INCREMENT,
+    `email`        VARCHAR(128) NOT NULL    UNIQUE,
+    `display_name` VARCHAR(128) NOT NULL    UNIQUE
 );
