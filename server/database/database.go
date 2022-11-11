@@ -18,14 +18,15 @@ type Builder interface {
 var db *sql.DB
 
 // Function to execute a raw SQL query
-func ExecuteQuery(query string) sql.Result {
+func ExecuteQuery(query string) (sql.Result, error) {
 	result, err := db.Exec(query)
 
 	if err != nil {
 		logging.Error.Printf("Error in executing SQL: %v", err)
+		return nil, err
 	}
 
-	return result
+	return result, nil
 }
 
 // Function to execute a SELECT query

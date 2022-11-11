@@ -12,7 +12,7 @@ type VersionController struct {
 	PingService service.PingService
 }
 
-func (vh *VersionController) GetVersion(resp http.ResponseWriter, request *http.Request) {
+func (vh *VersionController) GetVersion(resp http.ResponseWriter, req *http.Request) {
 	pingSuccess := vh.PingService.PingDatabase()
 
 	status := "OK"
@@ -32,7 +32,8 @@ func (vh *VersionController) GetVersion(resp http.ResponseWriter, request *http.
 		log.Fatal.Fatalf("Fatal error encountered while decoding json: %v", err)
 	}
 
-	log.Info.Print("Retrieving server version...")
+	requestId := req.Context().Value(model.RequestId{Id: "requestId"})
+	log.Info.Printf("Successfully handled request: %s", requestId)
 
 	resp.Write(data)
 }

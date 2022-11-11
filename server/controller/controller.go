@@ -3,6 +3,7 @@ package controller
 import (
 	"fmt"
 	log "hippo/logging"
+	middle "hippo/middleware"
 	"hippo/service"
 	"net/http"
 )
@@ -18,7 +19,7 @@ func (c Controller) HandleFunc(basePath string) {
 
 	http.HandleFunc(
 		fmt.Sprintf(urlPathFormat, "version"),
-		c.VersionController.GetVersion)
+		middle.Wrap(c.VersionController.GetVersion, middle.RequestLogger()))
 
 	http.HandleFunc(
 		fmt.Sprintf(urlPathFormat, "user"),

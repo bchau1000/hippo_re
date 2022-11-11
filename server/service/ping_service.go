@@ -1,7 +1,6 @@
 package service
 
 import (
-	"hippo/logging"
 	"hippo/repository"
 )
 
@@ -11,11 +10,6 @@ type PingService struct {
 
 func (ps *PingService) PingDatabase() bool {
 	success := ps.PingRepository.PingDatabase()
-
-	if success {
-		logging.Info.Print("Successfully pinged the database")
-	}
-
 	return success
 }
 

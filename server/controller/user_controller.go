@@ -15,7 +15,7 @@ type UserController struct {
 	UserService service.UserService
 }
 
-func (uc *UserController) GetUsers(resp http.ResponseWriter, request *http.Request) {
+func (uc *UserController) GetUsers(resp http.ResponseWriter, req *http.Request) {
 	users, err := uc.UserService.GetByIds()
 	if err != nil {
 		resp.WriteHeader(http.StatusBadRequest)
@@ -42,3 +42,9 @@ func NewUserController(userService service.UserService) UserController {
 		UserService: userService,
 	}
 }
+
+// Driver - execute queries
+
+// DAL or Data Access Layer - write queries:
+// 	Repository - simplest DAL, only in charge of a single table
+// 	Query - complex DAL for complex queries. Consists of Joins/Transactions
