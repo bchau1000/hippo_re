@@ -1,8 +1,10 @@
 package database
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
+	"hippo/common"
 	"hippo/config"
 	"hippo/logging"
 
@@ -18,11 +20,11 @@ type Builder interface {
 var db *sql.DB
 
 // Function to execute a raw SQL query
-func ExecuteQuery(query string) (sql.Result, error) {
-	result, err := db.Exec(query)
+func ExecuteQuery(ctx context.Context, query string) (sql.Result, error) {
+	result, err := db.ExecContext(ctx, query)
 
 	if err != nil {
-		logging.Error.Printf("Error in executing SQL: %v", err)
+		logging.Error.Print(formatError(ctx, common.Error.ExecuteSql, err))
 		return nil, err
 	}
 
@@ -30,18 +32,18 @@ func ExecuteQuery(query string) (sql.Result, error) {
 }
 
 // Function to execute a SELECT query
-func Search(query sq.SelectBuilder) (*sql.Rows, error) {
-	sql, args, err := toSql(query)
+func Search(ctx context.Context, query sq.SelectBuilder) (*sql.Rows, error) {
+	sql, args, err := toSql(ctx, query)
 
 	if err != nil {
 		return nil, err
 	}
 
-	logging.Info.Printf("Executing SQL: (%s) with params: %v", sql, args)
+	logging.Info.Printf("Executing SQL: (%s) with params %v", sql, args)
 	result, err := db.Query(sql, args...)
 
 	if err != nil {
-		logging.Error.Printf("Error occurred while executing search: %v", err)
+		logging.Error.Print(formatError(ctx, common.Error.ExecuteSql, err))
 		return nil, err
 	}
 
@@ -49,13 +51,13 @@ func Search(query sq.SelectBuilder) (*sql.Rows, error) {
 }
 
 // Function to execute an INSERT query
-func Insert(query sq.InsertBuilder) (sql.Result, error) {
-	sql, args, err := toSql(query)
+func Insert(ctx context.Context, query sq.InsertBuilder) (sql.Result, error) {
+	sql, args, err := toSql(ctx, query)
 	if err != nil {
 		return nil, err
 	}
 
-	result, err := exec(sql, args)
+	result, err := exec(ctx, sql, args)
 
 	if err != nil {
 		return nil, err
@@ -65,38 +67,65 @@ func Insert(query sq.InsertBuilder) (sql.Result, error) {
 }
 
 // Function to execute a DELETE query
-func Delete(query sq.DeleteBuilder) (int64, error) {
-	result, err := query.RunWith(db).Exec()
+func Delete(ctx context.Context, query sq.DeleteBuilder) (int64, error) {
+	sql, args, err := toSql(ctx, query)
 
 	if err != nil {
-		logging.Error.Printf("Error occurred while executing delete: %v", err)
+		return 0, nil
+	}
+
+	result, err := exec(ctx, sql, args)
+
+	if err != nil {
+		logging.Error.Print(formatError(ctx, common.Error.ExecuteSql, err))
 		return 0, nil
 	}
 
 	return result.RowsAffected()
 }
 
-func toSql(builder Builder) (string, []interface{}, error) {
+func Transaction(ctx context.Context, fn func(tx *sql.Tx) any) (any, error) {
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		logging.Error.Print(formatError(ctx, "Error occurred while beginning transaction", err))
+		return nil, err
+	}
+
+	result := fn(tx)
+
+	err = tx.Commit()
+	if err != nil {
+		return nil, err
+	}
+
+	return result, err
+}
+
+func toSql(ctx context.Context, builder Builder) (string, []interface{}, error) {
 	result, args, err := builder.ToSql()
 
 	if err != nil {
-		logging.Error.Printf("Error occurred while converting SQL: %v", err)
+		logging.Error.Print(formatError(ctx, common.Error.ConvertSql, err))
 		return "", nil, err
 	}
 
 	return result, args, nil
 }
 
-func exec(sql string, args []interface{}) (sql.Result, error) {
+func exec(ctx context.Context, sql string, args []interface{}) (sql.Result, error) {
 	logging.Info.Printf("Executing SQL: %s\n%v", sql, args)
-	result, err := db.Exec(sql, args...)
+	result, err := db.ExecContext(ctx, sql, args...)
 
 	if err != nil {
-		logging.Error.Printf("Error encountered executing SQL: %v", err)
+		logging.Error.Print(formatError(ctx, common.Error.ExecuteSql, err))
 		return nil, err
 	}
 
 	return result, nil
+}
+
+func formatError(ctx context.Context, message string, err error) string {
+	return logging.Errorf(ctx, message, err)
 }
 
 func Init(config *config.Config) {

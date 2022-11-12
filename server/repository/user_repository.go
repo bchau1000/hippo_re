@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	db "hippo/database"
 	"hippo/logging"
 	"hippo/model"
@@ -20,7 +21,7 @@ type UserRepository struct {
 	Column userColumn // columns
 }
 
-func (ur *UserRepository) GetByIds() ([]model.User, error) {
+func (ur *UserRepository) GetByIds(ctx context.Context) ([]model.User, error) {
 	queryBuilder := sq.
 		Select(
 			ur.Column.Id,
@@ -30,7 +31,7 @@ func (ur *UserRepository) GetByIds() ([]model.User, error) {
 
 	var users []model.User
 
-	rows, err := db.Search(queryBuilder)
+	rows, err := db.Search(ctx, queryBuilder)
 	if err != nil {
 		return nil, err
 	}

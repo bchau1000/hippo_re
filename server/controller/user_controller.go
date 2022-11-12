@@ -2,6 +2,8 @@ package controller
 
 import (
 	"encoding/json"
+	constant "hippo/common"
+	"hippo/logging"
 	"hippo/model"
 	"hippo/service"
 	"net/http"
@@ -16,11 +18,10 @@ type UserController struct {
 }
 
 func (uc *UserController) GetUsers(resp http.ResponseWriter, req *http.Request) {
-	users, err := uc.UserService.GetByIds()
+	users, err := uc.UserService.GetByIds(req.Context())
 	if err != nil {
-		resp.WriteHeader(http.StatusBadRequest)
-		resp.Write(model.Error("Error occurred while fulfilling request", "REQUEST"))
-		return
+		// Error is propagated -- no need to log
+		ServerErrorHandler(resp, req)
 	}
 
 	userReponse := UserResponse{
@@ -29,9 +30,12 @@ func (uc *UserController) GetUsers(resp http.ResponseWriter, req *http.Request) 
 
 	data, err := json.Marshal(userReponse)
 	if err != nil {
-		resp.WriteHeader(http.StatusBadRequest)
-		resp.Write(model.Error("Error occurred while decoding json", "JSON"))
-		return
+		logging.Error.Printf(
+			logging.Errorf(
+				req.Context(),
+				constant.Error.DecodeJson,
+				err))
+		ServerErrorHandler(resp, req)
 	}
 
 	resp.Write(data)
@@ -42,9 +46,3 @@ func NewUserController(userService service.UserService) UserController {
 		UserService: userService,
 	}
 }
-
-// Driver - execute queries
-
-// DAL or Data Access Layer - write queries:
-// 	Repository - simplest DAL, only in charge of a single table
-// 	Query - complex DAL for complex queries. Consists of Joins/Transactions

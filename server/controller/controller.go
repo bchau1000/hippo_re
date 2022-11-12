@@ -17,13 +17,15 @@ func (c Controller) HandleFunc(basePath string) {
 	log.Info.Printf("Assigning endpoints to controllers")
 	urlPathFormat := basePath + "%s"
 
+	commonMiddleware := []middle.Middleware{middle.RequestLogger()}
+
 	http.HandleFunc(
 		fmt.Sprintf(urlPathFormat, "version"),
-		middle.Wrap(c.VersionController.GetVersion, middle.RequestLogger()))
+		middle.Wrap(c.VersionController.GetVersion, commonMiddleware...))
 
 	http.HandleFunc(
 		fmt.Sprintf(urlPathFormat, "user"),
-		c.UserController.GetUsers)
+		middle.Wrap(c.UserController.GetUsers, commonMiddleware...))
 }
 
 func NewController(service service.Service) Controller {

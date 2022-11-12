@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"context"
+	key "hippo/common/key"
 	"hippo/logging"
-	"hippo/model"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -18,7 +18,7 @@ func RequestLogger() Middleware {
 			req = req.WithContext(
 				context.WithValue(
 					req.Context(),
-					model.RequestId{Id: "requestId"}, id))
+					key.RequestId, id))
 
 			next.ServeHTTP(resp, req)
 		}

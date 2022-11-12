@@ -1,6 +1,7 @@
 package repository
 
 import (
+	"context"
 	db "hippo/database"
 
 	sq "github.com/Masterminds/squirrel"
@@ -9,9 +10,9 @@ import (
 type PingRepository struct {
 }
 
-func (pr *PingRepository) PingDatabase() bool {
+func (pr *PingRepository) PingDatabase(ctx context.Context) bool {
 	query := sq.Select("1")
-	_, err := db.Search(query)
+	_, err := db.Search(ctx, query)
 
 	return err == nil
 }

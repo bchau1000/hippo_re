@@ -13,7 +13,7 @@ type VersionController struct {
 }
 
 func (vh *VersionController) GetVersion(resp http.ResponseWriter, req *http.Request) {
-	pingSuccess := vh.PingService.PingDatabase()
+	pingSuccess := vh.PingService.PingDatabase(req.Context())
 
 	status := "OK"
 	if !pingSuccess {
@@ -31,9 +31,6 @@ func (vh *VersionController) GetVersion(resp http.ResponseWriter, req *http.Requ
 	if err != nil {
 		log.Fatal.Fatalf("Fatal error encountered while decoding json: %v", err)
 	}
-
-	requestId := req.Context().Value(model.RequestId{Id: "requestId"})
-	log.Info.Printf("Successfully handled request: %s", requestId)
 
 	resp.Write(data)
 }
