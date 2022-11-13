@@ -6,6 +6,8 @@ import (
 	middle "hippo/middleware"
 	"hippo/service"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 type Controller struct {
@@ -13,19 +15,21 @@ type Controller struct {
 	UserController    UserController
 }
 
-func (c Controller) HandleFunc(basePath string) {
+func (c Controller) HandleFunc(basePath string, router *mux.Router) {
 	log.Info.Printf("Assigning endpoints to controllers")
 	urlPathFormat := basePath + "%s"
 
-	commonMiddleware := []middle.Middleware{middle.RequestLogger()}
+	commonMiddleware := []middle.Middleware{middle.RequestLogger(), middle.ResponseHeader()}
 
-	http.HandleFunc(
+	router.HandleFunc(
 		fmt.Sprintf(urlPathFormat, "version"),
-		middle.Wrap(c.VersionController.GetVersion, commonMiddleware...))
+		middle.Wrap(c.VersionController.GetVersion, commonMiddleware...),
+	).Methods(http.MethodGet, http.MethodOptions)
 
-	http.HandleFunc(
+	router.HandleFunc(
 		fmt.Sprintf(urlPathFormat, "user"),
-		middle.Wrap(c.UserController.GetUsers, commonMiddleware...))
+		middle.Wrap(c.UserController.GetUsers, commonMiddleware...),
+	).Methods(http.MethodGet, http.MethodOptions)
 }
 
 func NewController(service service.Service) Controller {

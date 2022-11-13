@@ -9,7 +9,7 @@ import (
 	"net/http"
 )
 
-type UserResponse struct {
+type userResponse struct {
 	Users []model.User `json:"users"`
 }
 
@@ -22,9 +22,10 @@ func (uc *UserController) GetUsers(resp http.ResponseWriter, req *http.Request) 
 	if err != nil {
 		// Error is propagated -- no need to log
 		ServerErrorHandler(resp, req)
+		return
 	}
 
-	userReponse := UserResponse{
+	userReponse := userResponse{
 		Users: users,
 	}
 
@@ -36,6 +37,7 @@ func (uc *UserController) GetUsers(resp http.ResponseWriter, req *http.Request) 
 				constant.Error.DecodeJson,
 				err))
 		ServerErrorHandler(resp, req)
+		return
 	}
 
 	resp.Write(data)

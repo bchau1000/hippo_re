@@ -2,7 +2,8 @@ package controller
 
 import (
 	"encoding/json"
-	log "hippo/logging"
+	"hippo/common"
+	"hippo/logging"
 	"hippo/model"
 	"hippo/service"
 	"net/http"
@@ -13,23 +14,25 @@ type VersionController struct {
 }
 
 func (vh *VersionController) GetVersion(resp http.ResponseWriter, req *http.Request) {
-	pingSuccess := vh.PingService.PingDatabase(req.Context())
+	ctx := req.Context()
+	pingSuccess, err := vh.PingService.PingDatabase(ctx)
 
-	status := "OK"
-	if !pingSuccess {
-		status = "BadRequest"
-		resp.WriteHeader(http.StatusBadRequest)
+	if !pingSuccess || err != nil {
+		ServerErrorHandler(resp, req)
+		return
 	}
 
 	version := &model.Version{
 		Version: "1.0",
-		Status:  status,
+		Status:  "OK",
 	}
 
 	data, err := json.Marshal(version)
 
 	if err != nil {
-		log.Fatal.Fatalf("Fatal error encountered while decoding json: %v", err)
+		logging.Error.Printf(common.FormatError(ctx, common.Error.ConvertJson, err))
+		ServerErrorHandler(resp, req)
+		return
 	}
 
 	resp.Write(data)

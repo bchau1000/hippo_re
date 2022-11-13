@@ -10,11 +10,11 @@ import (
 type PingRepository struct {
 }
 
-func (pr *PingRepository) PingDatabase(ctx context.Context) bool {
-	query := sq.Select("1")
+func (pr *PingRepository) PingDatabase(ctx context.Context) (bool, error) {
+	query := sq.Select("")
 	_, err := db.Search(ctx, query)
 
-	return err == nil
+	return err == nil, err
 }
 
 func NewPingRepository() PingRepository {

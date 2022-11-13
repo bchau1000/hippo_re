@@ -9,6 +9,8 @@ import (
 	"hippo/repository"
 	"hippo/service"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
@@ -18,23 +20,26 @@ func main() {
 	// Initialize MySQL Driver
 	database.Init(conf)
 
+	// Initialize router
+	router := mux.NewRouter()
+
 	// Initialize repositories, services, and controllers
 	repositories := repository.NewRepository()
 	services := service.NewService(repositories)
 	controllers := controller.NewController(services)
 
-	// Initialize endpoints
-	controllers.HandleFunc(conf.Server.BasePath)
+	// Delegate endpoints to controller methods
+	controllers.HandleFunc(conf.Server.BasePath, router)
 
 	// Start the server
-	startServer(conf)
+	startServer(conf, router)
 }
 
-func startServer(config *config.Config) {
+func startServer(config *config.Config, router *mux.Router) {
 	address := fmt.Sprintf(":%d", config.Server.Port)
 
 	logging.Info.Printf("Starting server on port: %d", config.Server.Port)
-	if err := http.ListenAndServe(address, nil); err != nil {
+	if err := http.ListenAndServe(address, router); err != nil {
 		logging.Fatal.Fatalf("Fatal error encountered while starting server: %v", err)
 	}
 }

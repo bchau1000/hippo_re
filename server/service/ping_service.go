@@ -9,9 +9,9 @@ type PingService struct {
 	PingRepository repository.PingRepository
 }
 
-func (ps *PingService) PingDatabase(ctx context.Context) bool {
-	success := ps.PingRepository.PingDatabase(ctx)
-	return success
+func (ps *PingService) PingDatabase(ctx context.Context) (bool, error) {
+	success, err := ps.PingRepository.PingDatabase(ctx)
+	return success, err
 }
 
 func NewPingService(pingRepository repository.PingRepository) PingService {

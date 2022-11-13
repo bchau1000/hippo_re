@@ -24,7 +24,7 @@ func ExecuteQuery(ctx context.Context, query string) (sql.Result, error) {
 	result, err := db.ExecContext(ctx, query)
 
 	if err != nil {
-		logging.Error.Print(formatError(ctx, common.Error.ExecuteSql, err))
+		logging.Error.Print(common.FormatError(ctx, common.Error.ExecuteSql, err))
 		return nil, err
 	}
 
@@ -36,6 +36,7 @@ func Search(ctx context.Context, query sq.SelectBuilder) (*sql.Rows, error) {
 	sql, args, err := toSql(ctx, query)
 
 	if err != nil {
+		logging.Error.Print(common.FormatError(ctx, common.Error.ConvertSql, err))
 		return nil, err
 	}
 
@@ -43,7 +44,7 @@ func Search(ctx context.Context, query sq.SelectBuilder) (*sql.Rows, error) {
 	result, err := db.Query(sql, args...)
 
 	if err != nil {
-		logging.Error.Print(formatError(ctx, common.Error.ExecuteSql, err))
+		logging.Error.Print(common.FormatError(ctx, common.Error.ExecuteSql, err))
 		return nil, err
 	}
 
@@ -77,7 +78,7 @@ func Delete(ctx context.Context, query sq.DeleteBuilder) (int64, error) {
 	result, err := exec(ctx, sql, args)
 
 	if err != nil {
-		logging.Error.Print(formatError(ctx, common.Error.ExecuteSql, err))
+		logging.Error.Print(common.FormatError(ctx, common.Error.ExecuteSql, err))
 		return 0, nil
 	}
 
@@ -87,7 +88,7 @@ func Delete(ctx context.Context, query sq.DeleteBuilder) (int64, error) {
 func Transaction(ctx context.Context, fn func(tx *sql.Tx) any) (any, error) {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
-		logging.Error.Print(formatError(ctx, "Error occurred while beginning transaction", err))
+		logging.Error.Print(common.FormatError(ctx, "Error occurred while beginning transaction", err))
 		return nil, err
 	}
 
@@ -105,7 +106,7 @@ func toSql(ctx context.Context, builder Builder) (string, []interface{}, error) 
 	result, args, err := builder.ToSql()
 
 	if err != nil {
-		logging.Error.Print(formatError(ctx, common.Error.ConvertSql, err))
+		logging.Error.Print(common.FormatError(ctx, common.Error.ConvertSql, err))
 		return "", nil, err
 	}
 
@@ -117,15 +118,11 @@ func exec(ctx context.Context, sql string, args []interface{}) (sql.Result, erro
 	result, err := db.ExecContext(ctx, sql, args...)
 
 	if err != nil {
-		logging.Error.Print(formatError(ctx, common.Error.ExecuteSql, err))
+		logging.Error.Print(common.FormatError(ctx, common.Error.ExecuteSql, err))
 		return nil, err
 	}
 
 	return result, nil
-}
-
-func formatError(ctx context.Context, message string, err error) string {
-	return logging.Errorf(ctx, message, err)
 }
 
 func Init(config *config.Config) {
