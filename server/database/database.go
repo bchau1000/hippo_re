@@ -22,9 +22,8 @@ var db *sql.DB
 // Function to execute a raw SQL query
 func ExecuteQuery(ctx context.Context, query string) (sql.Result, error) {
 	result, err := db.ExecContext(ctx, query)
-
 	if err != nil {
-		logging.Error.Print(common.FormatError(ctx, common.Error.ExecuteSql, err))
+		logging.Error.Print(common.FormatError(ctx, common.ServerError.ExecuteSql, err))
 		return nil, err
 	}
 
@@ -34,17 +33,16 @@ func ExecuteQuery(ctx context.Context, query string) (sql.Result, error) {
 // Function to execute a SELECT query
 func Search(ctx context.Context, query sq.SelectBuilder) (*sql.Rows, error) {
 	sql, args, err := toSql(ctx, query)
-
 	if err != nil {
-		logging.Error.Print(common.FormatError(ctx, common.Error.ConvertSql, err))
+		logging.Error.Print(common.FormatError(ctx, common.ServerError.ConvertSql, err))
 		return nil, err
 	}
 
 	logging.Info.Printf("Executing SQL: (%s) with params %v", sql, args)
-	result, err := db.Query(sql, args...)
 
+	result, err := db.Query(sql, args...)
 	if err != nil {
-		logging.Error.Print(common.FormatError(ctx, common.Error.ExecuteSql, err))
+		logging.Error.Print(common.FormatError(ctx, common.ServerError.ExecuteSql, err))
 		return nil, err
 	}
 
@@ -59,7 +57,6 @@ func Insert(ctx context.Context, query sq.InsertBuilder) (sql.Result, error) {
 	}
 
 	result, err := exec(ctx, sql, args)
-
 	if err != nil {
 		return nil, err
 	}
@@ -70,15 +67,13 @@ func Insert(ctx context.Context, query sq.InsertBuilder) (sql.Result, error) {
 // Function to execute a DELETE query
 func Delete(ctx context.Context, query sq.DeleteBuilder) (int64, error) {
 	sql, args, err := toSql(ctx, query)
-
 	if err != nil {
 		return 0, nil
 	}
 
 	result, err := exec(ctx, sql, args)
-
 	if err != nil {
-		logging.Error.Print(common.FormatError(ctx, common.Error.ExecuteSql, err))
+		logging.Error.Print(common.FormatError(ctx, common.ServerError.ExecuteSql, err))
 		return 0, nil
 	}
 
@@ -104,9 +99,8 @@ func Transaction(ctx context.Context, fn func(tx *sql.Tx) any) (any, error) {
 
 func toSql(ctx context.Context, builder Builder) (string, []interface{}, error) {
 	result, args, err := builder.ToSql()
-
 	if err != nil {
-		logging.Error.Print(common.FormatError(ctx, common.Error.ConvertSql, err))
+		logging.Error.Print(common.FormatError(ctx, common.ServerError.ConvertSql, err))
 		return "", nil, err
 	}
 
@@ -115,17 +109,17 @@ func toSql(ctx context.Context, builder Builder) (string, []interface{}, error) 
 
 func exec(ctx context.Context, sql string, args []interface{}) (sql.Result, error) {
 	logging.Info.Printf("Executing SQL: %s\n%v", sql, args)
-	result, err := db.ExecContext(ctx, sql, args...)
 
+	result, err := db.ExecContext(ctx, sql, args...)
 	if err != nil {
-		logging.Error.Print(common.FormatError(ctx, common.Error.ExecuteSql, err))
+		logging.Error.Print(common.FormatError(ctx, common.ServerError.ExecuteSql, err))
 		return nil, err
 	}
 
 	return result, nil
 }
 
-func Init(config *config.Config) {
+func InitDatabase(ctx context.Context, config *config.Config) {
 	var err error
 	db, err = sql.Open(
 		"mysql",

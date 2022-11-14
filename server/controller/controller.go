@@ -22,14 +22,19 @@ func (c Controller) HandleFunc(basePath string, router *mux.Router) {
 	commonMiddleware := []middle.Middleware{middle.RequestLogger(), middle.ResponseHeader()}
 
 	router.HandleFunc(
-		fmt.Sprintf(urlPathFormat, "version"),
+		fmt.Sprintf(urlPathFormat, "/version"),
 		middle.Wrap(c.VersionController.GetVersion, commonMiddleware...),
 	).Methods(http.MethodGet, http.MethodOptions)
 
 	router.HandleFunc(
-		fmt.Sprintf(urlPathFormat, "user"),
+		fmt.Sprintf(urlPathFormat, "/user"),
 		middle.Wrap(c.UserController.GetUsers, commonMiddleware...),
 	).Methods(http.MethodGet, http.MethodOptions)
+
+	router.HandleFunc(
+		fmt.Sprintf(urlPathFormat, "/user"),
+		middle.Wrap(c.UserController.RegisterUser, commonMiddleware...),
+	).Methods(http.MethodPut, http.MethodOptions)
 }
 
 func NewController(service service.Service) Controller {

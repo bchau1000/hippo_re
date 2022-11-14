@@ -1,6 +1,6 @@
-import { Version } from "../../models/Version";
+import { firebaseAuth } from "./firebase";
 
-const GetVersion = async ():Promise<any> => {
+const GetVersion = async ():Promise<Response> => {
     const info:RequestInit = {
         method: 'GET',
         headers: {
@@ -10,11 +10,7 @@ const GetVersion = async ():Promise<any> => {
     };
     const url:URL = new URL("http://127.0.0.1:4000/hippo/api/version");
     const response:Response =  await fetch(url, info);
-    if(response.status == 200) {
-        return await response.json()
-    } else {
-        return null
-    }
+    return response;
 }
 
 export {

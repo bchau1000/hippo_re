@@ -14,6 +14,8 @@ func NewService(repository repository.Repository) Service {
 	logging.Info.Print("Initializing service dependencies")
 	return Service{
 		PingService: NewPingService(repository.PingRepository),
-		UserService: NewUserService(repository.UserRepository),
+		UserService: NewUserService(
+			repository.UserRepository,
+			repository.FirebaseRepository),
 	}
 }

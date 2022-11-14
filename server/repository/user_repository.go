@@ -2,6 +2,7 @@ package repository
 
 import (
 	"context"
+	"hippo/common"
 	db "hippo/database"
 	"hippo/logging"
 	"hippo/model"
@@ -10,15 +11,17 @@ import (
 )
 
 type userColumn struct {
-	Id          string
-	Email       string
-	DisplayName string
+	Id          string `db:"id"`
+	Uid         string `db:"uid"`
+	Email       string `db:"email"`
+	DisplayName string `db:"display_name"`
 }
 
 // Repository for the `user` table
 type UserRepository struct {
-	Table  string     // table name
-	Column userColumn // columns
+	Table              string     // table name
+	Column             userColumn // columns
+	FirebaseRepository FirebaseRepository
 }
 
 func (ur *UserRepository) GetByIds(ctx context.Context) ([]model.User, error) {
@@ -51,13 +54,47 @@ func (ur *UserRepository) GetByIds(ctx context.Context) ([]model.User, error) {
 	return users, nil
 }
 
-func NewUserRepository() UserRepository {
+func (ur *UserRepository) CreateUser(ctx context.Context, user model.UserToCreate) (int64, error) {
+	newUser, err := ur.FirebaseRepository.RegisterUser(ctx, user)
+
+	if err != nil {
+		return -1, err
+	}
+
+	userToCreate := sq.
+		Insert(ur.Table).
+		Columns(
+			ur.Column.Uid,
+			ur.Column.Email,
+			ur.Column.DisplayName).
+		Values(
+			newUser.UID,
+			newUser.Email,
+			newUser.DisplayName)
+
+	result, err := db.Insert(ctx, userToCreate)
+	if err != nil {
+		return -1, err
+	}
+
+	lastInsertId, err := result.LastInsertId()
+	if err != nil {
+		logging.Error.Print(common.FormatError(ctx, "Error occurred while parsing last inserted ID", err))
+		return -1, err
+	}
+
+	return lastInsertId, nil
+}
+
+func NewUserRepository(firebaseRepository FirebaseRepository) UserRepository {
 	return UserRepository{
 		Table: "user",
 		Column: userColumn{
+			Uid:         "uid",
 			Id:          "id",
 			Email:       "email",
 			DisplayName: "display_name",
 		},
+		FirebaseRepository: firebaseRepository,
 	}
 }

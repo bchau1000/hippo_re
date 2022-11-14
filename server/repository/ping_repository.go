@@ -11,7 +11,7 @@ type PingRepository struct {
 }
 
 func (pr *PingRepository) PingDatabase(ctx context.Context) (bool, error) {
-	query := sq.Select("")
+	query := sq.Select("1")
 	_, err := db.Search(ctx, query)
 
 	return err == nil, err

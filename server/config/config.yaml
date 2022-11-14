@@ -1,6 +1,6 @@
 server:
   port: 3000
-  basePath: "/hippo/api/"
+  basePath: "/hippo/api"
 database:
   host: "127.0.0.1"
   port: 6033
@@ -9,3 +9,7 @@ database:
   # ENV Variables
   username: "root" 
   password: "DB_PASSWORD"
+
+# Set path to firebase key
+firebase:
+  path: "../../hippo-3b249-firebase-adminsdk-jz8r8-cbeabdae53.json"

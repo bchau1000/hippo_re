@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"hippo/config"
 	"hippo/controller"
@@ -16,9 +17,13 @@ import (
 func main() {
 	// Read in configurations
 	conf := config.GetConfig()
+	ctx := context.Background()
 
 	// Initialize MySQL Driver
-	database.Init(conf)
+	database.InitDatabase(ctx, conf)
+
+	// Initialize Firebase Auth client
+	database.InitFirebase(ctx, conf)
 
 	// Initialize router
 	router := mux.NewRouter()

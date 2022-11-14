@@ -30,7 +30,7 @@ func (vh *VersionController) GetVersion(resp http.ResponseWriter, req *http.Requ
 	data, err := json.Marshal(version)
 
 	if err != nil {
-		logging.Error.Printf(common.FormatError(ctx, common.Error.ConvertJson, err))
+		logging.Error.Printf(common.FormatError(ctx, common.ServerError.ConvertJson, err))
 		ServerErrorHandler(resp, req)
 		return
 	}
