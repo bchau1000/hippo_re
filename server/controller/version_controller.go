@@ -2,7 +2,7 @@ package controller
 
 import (
 	"encoding/json"
-	"hippo/common"
+	"hippo/common/errormsg"
 	"hippo/logging"
 	"hippo/model"
 	"hippo/service"
@@ -18,7 +18,7 @@ func (vh *VersionController) GetVersion(resp http.ResponseWriter, req *http.Requ
 	pingSuccess, err := vh.PingService.PingDatabase(ctx)
 
 	if !pingSuccess || err != nil {
-		ServerErrorHandler(resp, req)
+		ErrorHandler(resp, req, err)
 		return
 	}
 
@@ -30,8 +30,8 @@ func (vh *VersionController) GetVersion(resp http.ResponseWriter, req *http.Requ
 	data, err := json.Marshal(version)
 
 	if err != nil {
-		logging.Error.Printf(common.FormatError(ctx, common.ServerError.ConvertJson, err))
-		ServerErrorHandler(resp, req)
+		logging.Error.Printf(errormsg.FormatError(ctx, errormsg.ConvertJson, err))
+		ErrorHandler(resp, req, err)
 		return
 	}
 

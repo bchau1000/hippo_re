@@ -2,7 +2,7 @@ package controller
 
 import (
 	"encoding/json"
-	"hippo/common"
+	"hippo/common/errormsg"
 	"hippo/logging"
 	"hippo/model"
 	"hippo/service"
@@ -26,13 +26,13 @@ func (uc *UserController) GetUsers(resp http.ResponseWriter, req *http.Request) 
 
 	users, err := uc.UserService.GetByIds(ctx)
 	if err != nil {
-		ServerErrorHandler(resp, req)
+		ErrorHandler(resp, req, err)
 		return
 	}
 
 	user, err := uc.UserService.GetByEmail(ctx, "admin@email.com")
 	if err != nil {
-		ServerErrorHandler(resp, req)
+		ErrorHandler(resp, req, err)
 		return
 	}
 
@@ -43,8 +43,8 @@ func (uc *UserController) GetUsers(resp http.ResponseWriter, req *http.Request) 
 
 	data, err := json.Marshal(userReponse)
 	if err != nil {
-		logging.Error.Print(common.FormatError(ctx, common.ServerError.ConvertJson, err))
-		ServerErrorHandler(resp, req)
+		logging.Error.Print(errormsg.FormatError(ctx, errormsg.ConvertJson, err))
+		ErrorHandler(resp, req, err)
 		return
 	}
 
@@ -58,18 +58,18 @@ func (uc *UserController) RegisterUser(resp http.ResponseWriter, req *http.Reque
 
 	err := json.NewDecoder(req.Body).Decode(registerRequest)
 	if err != nil {
-		logging.Error.Printf(common.FormatError(ctx, common.ServerError.DecodeJson, err))
-		ServerErrorHandler(resp, req)
+		logging.Error.Printf(errormsg.FormatError(ctx, errormsg.DecodeJson, err))
+		ErrorHandler(resp, req, err)
 		return
 	}
 
 	err = uc.UserService.RegisterUser(ctx, registerRequest.User)
 	if err != nil {
-		ServerErrorHandler(resp, req)
+		ErrorHandler(resp, req, err)
 		return
 	}
 
-	CreatedHandler(resp, req, "User successfully registered!")
+	StatusCreatedHandler(resp, req, "User successfully registered!")
 }
 
 func NewUserController(userService service.UserService) UserController {

@@ -2,7 +2,7 @@ package repository
 
 import (
 	"context"
-	"hippo/common"
+	"hippo/common/errormsg"
 	"hippo/database"
 	"hippo/logging"
 	"hippo/model"
@@ -25,9 +25,9 @@ func (fr *FirebaseRepository) RegisterUser(ctx context.Context, user model.UserT
 		CreateUser(ctx, userToCreateFb)
 	if err != nil {
 		logging.Error.Print(
-			common.FormatError(
+			errormsg.FormatError(
 				ctx,
-				common.ServerError.QueryFirebase,
+				errormsg.QueryFirebase,
 				err))
 		return model.User{}, err
 	}
@@ -40,9 +40,9 @@ func (fr *FirebaseRepository) GetUsers(ctx context.Context, email string) (model
 	user, err := database.GetAuth().GetUserByEmail(ctx, email)
 	if err != nil {
 		logging.Error.Print(
-			common.FormatError(
+			errormsg.FormatError(
 				ctx,
-				common.ServerError.QueryFirebase,
+				errormsg.QueryFirebase,
 				err))
 		return model.User{}, err
 	}

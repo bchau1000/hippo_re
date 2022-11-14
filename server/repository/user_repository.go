@@ -2,7 +2,8 @@ package repository
 
 import (
 	"context"
-	"hippo/common"
+	"database/sql"
+	"hippo/common/errormsg"
 	db "hippo/database"
 	"hippo/logging"
 	"hippo/model"
@@ -55,31 +56,40 @@ func (ur *UserRepository) GetByIds(ctx context.Context) ([]model.User, error) {
 }
 
 func (ur *UserRepository) CreateUser(ctx context.Context, user model.UserToCreate) (int64, error) {
-	newUser, err := ur.FirebaseRepository.RegisterUser(ctx, user)
+	var lastInsertId int64
+	err := db.Transaction(ctx, func(tx *sql.Tx) error {
+		newUser, err := ur.FirebaseRepository.RegisterUser(ctx, user)
+
+		if err != nil {
+			return err
+		}
+
+		userToCreate := sq.
+			Insert(ur.Table).
+			Columns(
+				ur.Column.Uid,
+				ur.Column.Email,
+				ur.Column.DisplayName).
+			Values(
+				newUser.UID,
+				newUser.Email,
+				newUser.DisplayName)
+
+		result, err := db.InsertTx(ctx, tx, userToCreate)
+		if err != nil {
+			return err
+		}
+
+		lastInsertId, err = result.LastInsertId()
+		if err != nil {
+			logging.Error.Print(errormsg.FormatError(ctx, "Error occurred while parsing last inserted ID", err))
+			return err
+		}
+
+		return nil
+	})
 
 	if err != nil {
-		return -1, err
-	}
-
-	userToCreate := sq.
-		Insert(ur.Table).
-		Columns(
-			ur.Column.Uid,
-			ur.Column.Email,
-			ur.Column.DisplayName).
-		Values(
-			newUser.UID,
-			newUser.Email,
-			newUser.DisplayName)
-
-	result, err := db.Insert(ctx, userToCreate)
-	if err != nil {
-		return -1, err
-	}
-
-	lastInsertId, err := result.LastInsertId()
-	if err != nil {
-		logging.Error.Print(common.FormatError(ctx, "Error occurred while parsing last inserted ID", err))
 		return -1, err
 	}
 

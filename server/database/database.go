@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"hippo/common"
+	"hippo/common/errormsg"
 	"hippo/config"
 	"hippo/logging"
 
@@ -23,7 +23,7 @@ var db *sql.DB
 func ExecuteQuery(ctx context.Context, query string) (sql.Result, error) {
 	result, err := db.ExecContext(ctx, query)
 	if err != nil {
-		logging.Error.Print(common.FormatError(ctx, common.ServerError.ExecuteSql, err))
+		logging.Error.Print(errormsg.FormatError(ctx, errormsg.ExecuteSql, err))
 		return nil, err
 	}
 
@@ -34,7 +34,7 @@ func ExecuteQuery(ctx context.Context, query string) (sql.Result, error) {
 func Search(ctx context.Context, query sq.SelectBuilder) (*sql.Rows, error) {
 	sql, args, err := toSql(ctx, query)
 	if err != nil {
-		logging.Error.Print(common.FormatError(ctx, common.ServerError.ConvertSql, err))
+		logging.Error.Print(errormsg.FormatError(ctx, errormsg.ConvertSql, err))
 		return nil, err
 	}
 
@@ -42,7 +42,7 @@ func Search(ctx context.Context, query sq.SelectBuilder) (*sql.Rows, error) {
 
 	result, err := db.Query(sql, args...)
 	if err != nil {
-		logging.Error.Print(common.FormatError(ctx, common.ServerError.ExecuteSql, err))
+		logging.Error.Print(errormsg.FormatError(ctx, errormsg.ExecuteSql, err))
 		return nil, err
 	}
 
@@ -64,6 +64,26 @@ func Insert(ctx context.Context, query sq.InsertBuilder) (sql.Result, error) {
 	return result, nil
 }
 
+func InsertTx(
+	ctx context.Context,
+	tx *sql.Tx,
+	query sq.InsertBuilder) (sql.Result, error) {
+
+	sql, args, err := toSql(ctx, query)
+	if err != nil {
+		logging.Error.Panic(errormsg.FormatError(ctx, errormsg.ConvertSql, err))
+		return nil, err
+	}
+
+	result, err := tx.ExecContext(ctx, sql, args)
+	if err != nil {
+		logging.Error.Panic(errormsg.FormatError(ctx, errormsg.ExecuteSql, err))
+		return nil, err
+	}
+
+	return result, nil
+}
+
 // Function to execute a DELETE query
 func Delete(ctx context.Context, query sq.DeleteBuilder) (int64, error) {
 	sql, args, err := toSql(ctx, query)
@@ -73,34 +93,40 @@ func Delete(ctx context.Context, query sq.DeleteBuilder) (int64, error) {
 
 	result, err := exec(ctx, sql, args)
 	if err != nil {
-		logging.Error.Print(common.FormatError(ctx, common.ServerError.ExecuteSql, err))
+		logging.Error.Print(errormsg.FormatError(ctx, errormsg.ExecuteSql, err))
 		return 0, nil
 	}
 
 	return result.RowsAffected()
 }
 
-func Transaction(ctx context.Context, fn func(tx *sql.Tx) any) (any, error) {
+func Transaction(ctx context.Context, fn func(tx *sql.Tx) error) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
-		logging.Error.Print(common.FormatError(ctx, "Error occurred while beginning transaction", err))
-		return nil, err
+		logging.Error.Print(errormsg.FormatError(ctx, "Error occurred while beginning transaction", err))
+		return err
 	}
+	defer tx.Rollback()
 
-	result := fn(tx)
+	err = fn(tx)
+	if err != nil {
+		logging.Error.Print(errormsg.FormatError(ctx, "Error occurred during transaction", err))
+		return err
+	}
 
 	err = tx.Commit()
 	if err != nil {
-		return nil, err
+		logging.Error.Print(errormsg.FormatError(ctx, "Error occured after committing transaction", err))
+		return err
 	}
 
-	return result, err
+	return nil
 }
 
 func toSql(ctx context.Context, builder Builder) (string, []interface{}, error) {
 	result, args, err := builder.ToSql()
 	if err != nil {
-		logging.Error.Print(common.FormatError(ctx, common.ServerError.ConvertSql, err))
+		logging.Error.Print(errormsg.FormatError(ctx, errormsg.ConvertSql, err))
 		return "", nil, err
 	}
 
@@ -112,7 +138,7 @@ func exec(ctx context.Context, sql string, args []interface{}) (sql.Result, erro
 
 	result, err := db.ExecContext(ctx, sql, args...)
 	if err != nil {
-		logging.Error.Print(common.FormatError(ctx, common.ServerError.ExecuteSql, err))
+		logging.Error.Print(errormsg.FormatError(ctx, errormsg.ExecuteSql, err))
 		return nil, err
 	}
 
