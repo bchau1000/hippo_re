@@ -2,6 +2,8 @@ package model
 
 import "fmt"
 
+type Response struct{}
+
 func Error(message string, errorGuid string) []byte {
 	return []byte(fmt.Sprintf(
 		"{\"message\": \"%s\", \"error\": \"%s\"}",

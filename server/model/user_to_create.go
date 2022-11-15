@@ -1,7 +1,6 @@
 package model
 
 type UserToCreate struct {
-	Email       string `json:"email"`
-	Password    string `json:"password"`
-	DisplayName string `json:"displayName"`
+	User     User
+	Password string `json:"password"`
 }

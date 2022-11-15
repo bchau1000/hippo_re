@@ -22,43 +22,21 @@ type userColumn struct {
 type UserRepository struct {
 	Table              string     // table name
 	Column             userColumn // columns
-	FirebaseRepository FirebaseRepository
+	firebaseRepository FirebaseRepository
 }
 
-func (ur *UserRepository) GetByIds(ctx context.Context) ([]model.User, error) {
-	queryBuilder := sq.
-		Select(
-			ur.Column.Id,
-			ur.Column.Email,
-			ur.Column.DisplayName).
-		From(ur.Table)
+func (ur *UserRepository) AuthUser(ctx context.Context, idToken string) (model.User, error) {
+	return ur.firebaseRepository.AuthUser(ctx, idToken)
+}
 
-	var users []model.User
-
-	rows, err := db.Search(ctx, queryBuilder)
-	if err != nil {
-		return nil, err
-	}
-
-	for rows.Next() {
-		user := model.User{}
-
-		err = rows.Scan(&user.Id, &user.Email, &user.DisplayName)
-		if err != nil {
-			logging.Error.Printf("Error encountered scanning user object: %v", err)
-			return nil, err
-		}
-
-		users = append(users, user)
-	}
-
-	return users, nil
+func (ur *UserRepository) GetUserByEmail(ctx context.Context, email string) (model.User, error) {
+	return ur.firebaseRepository.GetUserByEmail(ctx, email)
 }
 
 func (ur *UserRepository) CreateUser(ctx context.Context, user model.UserToCreate) (int64, error) {
 	var lastInsertId int64
 	err := db.Transaction(ctx, func(tx *sql.Tx) error {
-		newUser, err := ur.FirebaseRepository.RegisterUser(ctx, user)
+		newUser, err := ur.firebaseRepository.RegisterUser(ctx, user)
 
 		if err != nil {
 			return err
@@ -98,6 +76,10 @@ func (ur *UserRepository) CreateUser(ctx context.Context, user model.UserToCreat
 
 func NewUserRepository(firebaseRepository FirebaseRepository) UserRepository {
 	return UserRepository{
+		// Private
+		firebaseRepository: firebaseRepository,
+
+		// Public
 		Table: "user",
 		Column: userColumn{
 			Uid:         "uid",
@@ -105,6 +87,5 @@ func NewUserRepository(firebaseRepository FirebaseRepository) UserRepository {
 			Email:       "email",
 			DisplayName: "display_name",
 		},
-		FirebaseRepository: firebaseRepository,
 	}
 }

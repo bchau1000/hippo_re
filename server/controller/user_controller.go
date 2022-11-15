@@ -9,41 +9,39 @@ import (
 	"net/http"
 )
 
-type userResponse struct {
-	Users []model.User `json:"users"`
+type UserController struct {
+	userService service.UserService
+}
+
+type authUserRequest struct {
+	IdToken string `json:"idToken"`
 }
 
 type registerUserRequest struct {
-	User model.UserToCreate `json:"user"`
+	Request model.Request
+	User    model.UserToCreate `json:"user"`
 }
 
-type UserController struct {
-	UserService service.UserService
-}
-
-func (uc *UserController) GetUsers(resp http.ResponseWriter, req *http.Request) {
+func (uc *UserController) AuthUser(resp http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+	authUser := &authUserRequest{}
+	json.
+		NewDecoder(req.Body).
+		Decode(authUser)
 
-	users, err := uc.UserService.GetByIds(ctx)
+	user, err := uc.userService.AuthUser(ctx, authUser.IdToken)
 	if err != nil {
 		ErrorHandler(resp, req, err)
 		return
 	}
 
-	user, err := uc.UserService.GetByEmail(ctx, "admin@email.com")
+	data, err := json.Marshal(user)
 	if err != nil {
-		ErrorHandler(resp, req, err)
-		return
-	}
-
-	users = append(users, user)
-	userReponse := userResponse{
-		Users: users,
-	}
-
-	data, err := json.Marshal(userReponse)
-	if err != nil {
-		logging.Error.Print(errormsg.FormatError(ctx, errormsg.ConvertJson, err))
+		logging.Error.Printf(
+			errormsg.FormatError(
+				ctx,
+				errormsg.DecodeJson,
+				err))
 		ErrorHandler(resp, req, err)
 		return
 	}
@@ -56,14 +54,20 @@ func (uc *UserController) RegisterUser(resp http.ResponseWriter, req *http.Reque
 
 	registerRequest := &registerUserRequest{}
 
-	err := json.NewDecoder(req.Body).Decode(registerRequest)
+	err := json.
+		NewDecoder(req.Body).
+		Decode(registerRequest)
 	if err != nil {
-		logging.Error.Printf(errormsg.FormatError(ctx, errormsg.DecodeJson, err))
+		logging.Error.Printf(
+			errormsg.FormatError(
+				ctx,
+				errormsg.DecodeJson,
+				err))
 		ErrorHandler(resp, req, err)
 		return
 	}
 
-	err = uc.UserService.RegisterUser(ctx, registerRequest.User)
+	err = uc.userService.RegisterUser(ctx, registerRequest.User)
 	if err != nil {
 		ErrorHandler(resp, req, err)
 		return
@@ -74,6 +78,6 @@ func (uc *UserController) RegisterUser(resp http.ResponseWriter, req *http.Reque
 
 func NewUserController(userService service.UserService) UserController {
 	return UserController{
-		UserService: userService,
+		userService: userService,
 	}
 }
