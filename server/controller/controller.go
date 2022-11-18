@@ -3,7 +3,7 @@ package controller
 import (
 	"fmt"
 	log "hippo/logging"
-	middle "hippo/middleware"
+	mw "hippo/middleware"
 	"hippo/service"
 	"net/http"
 
@@ -11,39 +11,44 @@ import (
 )
 
 type Controller struct {
-	VersionController VersionController
-	UserController    UserController
+	middleware     mw.Middleware
+	pingController PingController
+	userController UserController
 }
 
 func (c Controller) HandleFunc(basePath string, router *mux.Router) {
 	log.Info.Printf("Assigning endpoints to controllers")
 	urlPathFormat := basePath + "%s"
 
-	commonMiddleware := []middle.Middleware{middle.RequestLogger(), middle.ResponseHeader()}
+	commonMiddleware := []mw.IMiddlewareWrapper{
+		&c.middleware.RequestLoggerMiddle,
+		&c.middleware.ResponseHeaderMiddle,
+	}
 
 	router.
 		HandleFunc(
-			fmt.Sprintf(urlPathFormat, "/version"),
-			middle.Wrap(c.VersionController.GetVersion, commonMiddleware...)).
+			fmt.Sprintf(urlPathFormat, "/ping"),
+			mw.Wrap(c.pingController.Ping, commonMiddleware...)).
 		Methods(http.MethodGet, http.MethodOptions)
 
 	router.
 		HandleFunc(
 			fmt.Sprintf(urlPathFormat, "/user/auth"),
-			middle.Wrap(c.UserController.AuthUser, commonMiddleware...)).
+			mw.Wrap(c.userController.AuthUser, commonMiddleware...)).
 		Methods(http.MethodPost, http.MethodOptions)
 
 	router.
 		HandleFunc(
 			fmt.Sprintf(urlPathFormat, "/user/register"),
-			middle.Wrap(c.UserController.RegisterUser, commonMiddleware...)).
+			mw.Wrap(c.userController.RegisterUser, commonMiddleware...)).
 		Methods(http.MethodPut, http.MethodOptions)
 }
 
-func NewController(service service.Service) Controller {
+func NewController(service service.Service, middleware mw.Middleware) Controller {
 	log.Info.Printf("Initializing controller dependencies")
 	return Controller{
-		VersionController: NewVersionController(service.PingService),
-		UserController:    NewUserController(service.UserService),
+		middleware:     middleware,
+		pingController: NewPingController(service.PingService),
+		userController: NewUserController(service.UserService),
 	}
 }

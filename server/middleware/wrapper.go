@@ -21,11 +21,15 @@ import "net/http"
  *  Run(controller2(), baseMiddleWares)
 **/
 
-type Middleware func(http.HandlerFunc) http.HandlerFunc
+type IMiddlewareWrapper interface {
+	Wrap() MiddlewareWrapper
+}
 
-func Wrap(handler http.HandlerFunc, middleware ...Middleware) http.HandlerFunc {
+type MiddlewareWrapper func(http.HandlerFunc) http.HandlerFunc
 
-	var length int = len(middleware)
+func Wrap(handler http.HandlerFunc, wrapper ...IMiddlewareWrapper) http.HandlerFunc {
+
+	var length int = len(wrapper)
 
 	if length < 1 {
 		return handler
@@ -34,7 +38,7 @@ func Wrap(handler http.HandlerFunc, middleware ...Middleware) http.HandlerFunc {
 	wrappedHandler := handler
 
 	for i := length - 1; i >= 0; i-- {
-		wrappedHandler = middleware[i](wrappedHandler)
+		wrappedHandler = wrapper[i].Wrap()(wrappedHandler)
 	}
 
 	return wrappedHandler

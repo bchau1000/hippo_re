@@ -2,21 +2,29 @@ package repository
 
 import (
 	"context"
-	db "hippo/database"
-
-	sq "github.com/Masterminds/squirrel"
+	"hippo/database"
 )
 
 type PingRepository struct {
+	database database.Database
+	fbAuth   database.FirebaseAuth
 }
 
 func (pr *PingRepository) PingDatabase(ctx context.Context) (bool, error) {
-	query := sq.Select("1")
-	_, err := db.Search(ctx, query)
+	err := pr.database.Ping(ctx)
+	if err != nil {
+		return false, err
+	}
 
 	return err == nil, err
 }
 
-func NewPingRepository() PingRepository {
-	return PingRepository{}
+func NewPingRepository(
+	database database.Database,
+	fbAuth database.FirebaseAuth,
+) PingRepository {
+	return PingRepository{
+		database: database,
+		fbAuth:   fbAuth,
+	}
 }

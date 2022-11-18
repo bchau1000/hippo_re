@@ -4,7 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"hippo/common/errormsg"
-	db "hippo/database"
+	"hippo/database"
 	"hippo/logging"
 	"hippo/model"
 
@@ -20,8 +20,10 @@ type userColumn struct {
 
 // Repository for the `user` table
 type UserRepository struct {
-	Table              string     // table name
-	Column             userColumn // columns
+	Column userColumn // columns
+
+	Table              string // table name
+	database           database.Database
 	firebaseRepository FirebaseRepository
 }
 
@@ -35,7 +37,7 @@ func (ur *UserRepository) GetUserByEmail(ctx context.Context, email string) (mod
 
 func (ur *UserRepository) CreateUser(ctx context.Context, user model.UserToCreate) (int64, error) {
 	var lastInsertId int64
-	err := db.Transaction(ctx, func(tx *sql.Tx) error {
+	err := ur.database.Transaction(ctx, func(tx *sql.Tx) error {
 		newUser, err := ur.firebaseRepository.RegisterUser(ctx, user)
 
 		if err != nil {
@@ -53,7 +55,7 @@ func (ur *UserRepository) CreateUser(ctx context.Context, user model.UserToCreat
 				newUser.Email,
 				newUser.DisplayName)
 
-		result, err := db.InsertTx(ctx, tx, userToCreate)
+		result, err := ur.database.InsertTx(ctx, tx, userToCreate)
 		if err != nil {
 			return err
 		}
@@ -74,12 +76,12 @@ func (ur *UserRepository) CreateUser(ctx context.Context, user model.UserToCreat
 	return lastInsertId, nil
 }
 
-func NewUserRepository(firebaseRepository FirebaseRepository) UserRepository {
-	return UserRepository{
-		// Private
-		firebaseRepository: firebaseRepository,
+func NewUserRepository(
+	database database.Database,
+	firebaseRepository FirebaseRepository,
+) UserRepository {
 
-		// Public
+	return UserRepository{
 		Table: "user",
 		Column: userColumn{
 			Uid:         "uid",
@@ -87,5 +89,7 @@ func NewUserRepository(firebaseRepository FirebaseRepository) UserRepository {
 			Email:       "email",
 			DisplayName: "display_name",
 		},
+
+		firebaseRepository: firebaseRepository,
 	}
 }

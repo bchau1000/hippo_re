@@ -11,18 +11,19 @@ import (
 )
 
 type FirebaseRepository struct {
+	database     database.Database
+	firebaseAuth database.FirebaseAuth
 }
 
 func (fr *FirebaseRepository) RegisterUser(ctx context.Context, request model.UserToCreate) (model.User, error) {
+
 	userToCreateFb := &auth.UserToCreate{}
 	userToCreateFb.
 		Email(request.User.Email).
 		Password(request.Password).
 		DisplayName(request.User.DisplayName)
 
-	userRecord, err := database.
-		GetAuth().
-		CreateUser(ctx, userToCreateFb)
+	userRecord, err := fr.firebaseAuth.Client.CreateUser(ctx, userToCreateFb)
 	if err != nil {
 		logging.Error.Print(
 			errormsg.FormatError(
@@ -33,11 +34,10 @@ func (fr *FirebaseRepository) RegisterUser(ctx context.Context, request model.Us
 	}
 
 	return *model.UserRecordToUser(userRecord), nil
-
 }
 
 func (fr *FirebaseRepository) AuthUser(ctx context.Context, idToken string) (model.User, error) {
-	authToken, err := database.GetAuth().VerifyIDToken(ctx, idToken)
+	authToken, err := fr.firebaseAuth.Client.VerifyIDToken(ctx, idToken)
 	if err != nil {
 		logging.Error.Print(
 			errormsg.FormatError(
@@ -55,7 +55,7 @@ func (fr *FirebaseRepository) AuthUser(ctx context.Context, idToken string) (mod
 }
 
 func (fr *FirebaseRepository) GetUserByUID(ctx context.Context, uid string) (model.User, error) {
-	userRecord, err := database.GetAuth().GetUser(ctx, uid)
+	userRecord, err := fr.firebaseAuth.Client.GetUser(ctx, uid)
 	if err != nil {
 		logging.Error.Print(
 			errormsg.FormatError(
@@ -69,7 +69,7 @@ func (fr *FirebaseRepository) GetUserByUID(ctx context.Context, uid string) (mod
 }
 
 func (fr *FirebaseRepository) GetUserByEmail(ctx context.Context, email string) (model.User, error) {
-	user, err := database.GetAuth().GetUserByEmail(ctx, email)
+	user, err := fr.firebaseAuth.Client.GetUserByEmail(ctx, email)
 	if err != nil {
 		logging.Error.Print(
 			errormsg.FormatError(
@@ -86,6 +86,13 @@ func (fr *FirebaseRepository) GetUserByEmail(ctx context.Context, email string) 
 	}, nil
 }
 
-func NewFirebaseRepository() FirebaseRepository {
-	return FirebaseRepository{}
+func NewFirebaseRepository(
+	database database.Database,
+	firebaseAuth database.FirebaseAuth,
+) FirebaseRepository {
+
+	return FirebaseRepository{
+		database:     database,
+		firebaseAuth: firebaseAuth,
+	}
 }

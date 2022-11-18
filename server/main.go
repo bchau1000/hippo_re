@@ -7,6 +7,7 @@ import (
 	"hippo/controller"
 	"hippo/database"
 	"hippo/logging"
+	"hippo/middleware"
 	"hippo/repository"
 	"hippo/service"
 	"net/http"
@@ -19,19 +20,20 @@ func main() {
 	conf := config.GetConfig()
 	ctx := context.Background()
 
-	// Initialize MySQL Driver
-	database.InitDatabase(ctx, conf)
+	// Initialize database connection
+	db := database.NewDatabase(ctx, conf)
 
 	// Initialize Firebase Auth client
-	database.InitFirebase(ctx, conf)
+	fbAuth := database.NewFirebaseAuth(ctx, conf)
 
 	// Initialize router
 	router := mux.NewRouter()
 
 	// Initialize repositories, services, and controllers
-	repositories := repository.NewRepository()
+	repositories := repository.NewRepository(db, fbAuth)
 	services := service.NewService(repositories)
-	controllers := controller.NewController(services)
+	middleware := middleware.NewMiddleware(services)
+	controllers := controller.NewController(services, middleware)
 
 	// Delegate endpoints to controller methods
 	controllers.HandleFunc(conf.Server.BasePath, router)
