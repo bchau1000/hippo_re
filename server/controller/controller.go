@@ -39,6 +39,12 @@ func (c Controller) HandleFunc(basePath string, router *mux.Router) {
 
 	router.
 		HandleFunc(
+			fmt.Sprintf(urlPathFormat, "/user/login"),
+			mw.Wrap(c.userController.LoginUser, commonMiddleware...)).
+		Methods(http.MethodPost, http.MethodOptions)
+
+	router.
+		HandleFunc(
 			fmt.Sprintf(urlPathFormat, "/user/register"),
 			mw.Wrap(c.userController.RegisterUser, commonMiddleware...)).
 		Methods(http.MethodPut, http.MethodOptions)

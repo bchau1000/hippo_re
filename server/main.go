@@ -16,7 +16,7 @@ import (
 )
 
 func main() {
-	// Read in configurations
+	// Read in configurations, set context
 	conf := config.GetConfig()
 	ctx := context.Background()
 

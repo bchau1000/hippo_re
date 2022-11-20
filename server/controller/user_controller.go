@@ -24,16 +24,46 @@ type registerUserRequest struct {
 
 func (uc *UserController) AuthUser(resp http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+
+	cookie, err := req.Cookie("idToken")
+	if err != nil {
+		ErrorHandler(resp, req, err)
+		return
+	}
+
+	idToken := cookie.Value
+
+	_, err = uc.userService.AuthUser(ctx, idToken)
+	if err != nil {
+		ErrorHandler(resp, req, err)
+		return
+	}
+
+	resp.Write([]byte("Success! User is logged in"))
+}
+
+func (uc *UserController) LoginUser(resp http.ResponseWriter, req *http.Request) {
+	ctx := req.Context()
 	authUser := &authUserRequest{}
 	json.
 		NewDecoder(req.Body).
 		Decode(authUser)
 
 	user, err := uc.userService.AuthUser(ctx, authUser.IdToken)
+
 	if err != nil {
 		ErrorHandler(resp, req, err)
 		return
 	}
+
+	http.SetCookie(
+		resp,
+		&http.Cookie{
+			Name:     "idToken",
+			Value:    authUser.IdToken,
+			MaxAge:   0,
+			Path:     "/",
+			HttpOnly: true})
 
 	data, err := json.Marshal(user)
 	if err != nil {

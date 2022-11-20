@@ -169,6 +169,7 @@ func NewDatabase(ctx context.Context, config *config.Config) Database {
 
 	if err != nil {
 		logging.Fatal.Fatalf("Fatal error encountered while opening DB connection %v", err)
+		return Database{}
 	}
 
 	logging.Info.Printf(
